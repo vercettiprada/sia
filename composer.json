@@ -29,9 +29,7 @@
         }
     },
     "scripts": {
-        "post-root-package-install": [
-            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
-        ]
+         "start": "php -S 0.0.0.0:${PORT:-8080} -t public"
     },
     "config": {
         "optimize-autoloader": true,
