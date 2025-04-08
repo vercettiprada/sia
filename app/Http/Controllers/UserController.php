@@ -68,13 +68,17 @@ class UserController extends Controller
         }
         */
     }
-public function delete($id)
-{
+    public function delete($id)
+    {
+        // Attempt to find the user by ID.
+        $user = User::findOrFail($id);
+        
+        // Delete the user.
+        $user->delete();
 
-    $user = User::findOrFail($id);
-    $user->delete();
-    return $this->errorResponse('User ID Does Not Exist', Response::HTTP_NOT_FOUND);
-
+        // Return success message after deletion.
+        return $this->successResponse('User successfully deleted', Response::HTTP_OK);
+    
 
     }
     
