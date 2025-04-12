@@ -79,6 +79,7 @@ $app->configure('app');
 
  $app->routeMiddleware([
      'auth' => App\Http\Middleware\Authenticate::class,
+     'jwt.auth' => Tymon\JWTAuth\Http\Middleware\Authenticate::class, // Ensure JWT middleware is registered
  ]);
 
 /*
@@ -95,7 +96,7 @@ $app->configure('app');
  $app->register(App\Providers\AppServiceProvider::class);
  $app->register(App\Providers\AuthServiceProvider::class);
  $app->register(App\Providers\EventServiceProvider::class);
- $app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
+ $app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class); // Ensure JWTAuth service provider is registered
 
 // Register middleware
 $app->routeMiddleware([
