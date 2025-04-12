@@ -37,8 +37,8 @@ class AuthController extends Controller
         ];
 
         // Check credentials
-        if ($request->username !== $predefinedCredentials['bershka'] || 
-            $request->password !== $predefinedCredentials['bershka']) {
+        if ($request->username !== $predefinedCredentials['username'] || 
+            $request->password !== $predefinedCredentials['password']) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
