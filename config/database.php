@@ -8,8 +8,8 @@ return [
 
         'mysql' => [
             'driver'    => 'mysql',
-            'host'      => env('DB_HOST_OLD', '127.0.0.1'),
-            'port'      => env('DB_PORT_OLD', '3306'),
+            'host'      => env('DB_HOST', '127.0.0.1'),
+            'port'      => env('DB_PORT', '3306'),
             'database'  => env('DB_DATABASE_OLD', 'forge'),
             'username'  => env('DB_USERNAME_OLD', 'forge'),
             'password'  => env('DB_PASSWORD_OLD', ''),
