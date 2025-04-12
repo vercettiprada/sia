@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Hash;
+use Tymon\JWTAuth\Facades\JWTAuth; // Import JWTAuth facade
 
 class AuthController extends Controller
 {
@@ -42,8 +42,8 @@ class AuthController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        // Generate token
-        $token = Auth::loginUsingId(1); // Use a dummy user ID
+        // Generate token using JWTAuth
+        $token = JWTAuth::fromUser(Auth::user()); // Generate token for authenticated user
 
         return $this->respondWithToken($token);
     }
