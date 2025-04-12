@@ -4,15 +4,6 @@
 
 // ... other routes ...
 
-$router->get('/protected-resource', [
-    'middleware' => 'auth.access',
-    'uses' => 'YourController@yourMethod'
-]);
-
-$router->post('/secure-endpoint', [
-    'middleware' => 'auth.access',
-    'uses' => 'AnotherController@anotherMethod'
-]);
 
 // ... other routes ...
 // Group all API routes under 'api' prefix and apply JWT middleware
