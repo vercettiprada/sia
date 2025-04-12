@@ -30,21 +30,16 @@ class AuthController extends Controller
             return response()->json(['error' => $validator->errors()], 400);
         }
 
-        // Predefined credentials
-        $predefinedCredentials = [
-            'username' => 'bershka',
-            'password' => 'bershka'
-        ];
-
-        // Check credentials
-        if ($request->username !== $predefinedCredentials['username'] || 
-            $request->password !== $predefinedCredentials['password']) {
+        // Attempt to authenticate the user
+        if (!$token = Auth::attempt($request->only('username', 'password'))) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        // Generate token using JWTAuth for a dummy user
-        $dummyUser = (object) ['id' => 1, 'username' => 'bershka'];
-        $token = JWTAuth::fromUser($dummyUser);
+        // Retrieve the authenticated user
+        $user = Auth::user();
+
+        // Generate token using JWTAuth
+        $token = JWTAuth::fromUser($user);
 
         return $this->respondWithToken($token);
     }
