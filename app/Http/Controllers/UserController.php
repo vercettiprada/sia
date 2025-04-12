@@ -22,7 +22,7 @@ class UserController extends Controller
 
     public function getUsers()
     {
-        $users = \Illuminate\Support\Facades\DB::connection('mysql')->select("SELECT * FROM tbl_user");
+        $users = DB::connection('mysql')->select("SELECT * FROM tbl_user");
         return $this->successResponse($users);
     }
 
