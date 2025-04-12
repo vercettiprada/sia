@@ -4,11 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
-use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class AuthController extends Controller
 {
-    // Hardcoded credentials
     private $users = [
         'bershka' => 'password123',
         'anotheruser' => 'anotherpassword'
@@ -18,10 +17,12 @@ class AuthController extends Controller
     {
         $credentials = $request->only('username', 'password');
 
-        // Check if the credentials match the hardcoded users
         if (isset($this->users[$credentials['username']]) && $this->users[$credentials['username']] === $credentials['password']) {
+            // Create a User instance
+            $user = new User(['username' => $credentials['username']]);
+
             // Generate JWT token
-            $token = JWTAuth::fromUser((object) ['username' => $credentials['username']]);
+            $token = JWTAuth::fromUser($user);
 
             return response()->json([
                 'access_token' => $token,
