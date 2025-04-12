@@ -6,44 +6,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
-use App\Models\User;
 
 class AuthController extends Controller
 {
     public function __construct()
     {
-        // Require authentication for all methods except register, login, refresh, and logout
-        $this->middleware('auth:api', ['except' => ['register', 'login', 'refresh', 'logout']]);
-    }
-
-    /**
-     * Register a new user.
-     */
-    public function register(Request $request)
-    {
-        // Use Validator instead of $request->validate()
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
-        }
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email, // FIXED: Added missing email
-            'password' => Hash::make($request->password),
-        ]);
-
-        return response()->json([
-            'message' => 'User successfully registered',
-            'user' => $user,
-            'token' => auth()->login($user)
-        ], 201);
-        
+        // No authentication required for login
+        $this->middleware('auth:api', ['except' => ['login']]);
     }
 
     /**
@@ -53,7 +22,7 @@ class AuthController extends Controller
     {
         // Validate request
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
+            'username' => 'required|string',
             'password' => 'required|string|min:6',
         ]);
 
@@ -61,11 +30,20 @@ class AuthController extends Controller
             return response()->json(['error' => $validator->errors()], 400);
         }
 
-        $credentials = $request->only('email', 'password');
+        // Predefined credentials
+        $predefinedCredentials = [
+            'username' => 'bershka',
+            'password' => 'bershka'
+        ];
 
-        if (!$token = Auth::attempt($credentials)) {
+        // Check credentials
+        if ($request->username !== $predefinedCredentials['bershka'] || 
+            $request->password !== $predefinedCredentials['bershka']) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
+
+        // Generate token
+        $token = Auth::loginUsingId(1); // Use a dummy user ID
 
         return $this->respondWithToken($token);
     }
@@ -104,7 +82,7 @@ class AuthController extends Controller
             'access_token' => $token,
             'token_type' => 'bearer',
             'user' => Auth::user(),
-            'expires_in' => auth()->factory()->getTTL() * 60 // Default expiration time
+            'expires_in' => config('jwt.ttl') * 60 // Default expiration time in seconds
         ]);
     }
 }
