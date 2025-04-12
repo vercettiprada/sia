@@ -2,10 +2,19 @@
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 
-$router->get('/', function () use ($router) {
-    return $router->app->version();
-});
+// ... other routes ...
 
+$router->get('/protected-resource', [
+    'middleware' => 'auth.access',
+    'uses' => 'YourController@yourMethod'
+]);
+
+$router->post('/secure-endpoint', [
+    'middleware' => 'auth.access',
+    'uses' => 'AnotherController@anotherMethod'
+]);
+
+// ... other routes ...
 // Group all API routes under 'api' prefix and apply JWT middleware
 $router->group(['prefix' => 'api', 'middleware' => 'auth:api'], function () use ($router) {
 
