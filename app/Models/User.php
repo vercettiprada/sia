@@ -1,35 +1,20 @@
 <?php
+    namespace App\Models;
 
-namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
-use Illuminate\Auth\Authenticatable;
-use Tymon\JWTAuth\Contracts\JWTSubject;
+ use Illuminate\Database\Eloquent\Model;
 
-class User extends Model implements AuthenticatableContract, JWTSubject
-{
-    use Authenticatable;
+ class User extends Model{
 
-    protected $table = 'tbl_user';
-    protected $primaryKey = 'userid';
-    public $timestamps = false;
-
-    protected $fillable = [
-        'username',
-        'password',
-        'gender',
-        'jobid',
-    ];
-
-    // Implement JWTSubject methods
-    public function getJWTIdentifier()
-    {
-        return $this->getKey(); // Use the primary key as the identifier
+ protected $table = 'tbl_user';
+ // column sa table
+ protected $fillable = [
+ 'username', 'password','gender','jobid'
+         ];
+         public $timestamps = false;
+       protected $primaryKey ='userid';
+       
+       protected $hidden = [
+         'password',
+       ];
     }
-
-    public function getJWTCustomClaims()
-    {
-        return [];
-    }
-}
