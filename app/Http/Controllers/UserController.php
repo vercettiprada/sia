@@ -2,33 +2,37 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Traits\ApiResponser;
+use App\Models\UserJob;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Hash;
+use App\Models\User;
+use App\Traits\ApiResponser;
+use Illuminate\Support\Facades\DB; // Import DB facade
 
 class UserController extends Controller
 {
     use ApiResponser;
 
-    private $users = [];
+    private $request;
 
-    public function __construct()
+    public function __construct(Request $request)
     {
-        // Initialize with some predefined users
-        $this->users = [
-            new User(['username' => 'bershka', 'password' => Hash::make('password123')]),
-            new User(['username' => 'anotheruser', 'password' => Hash::make('anotherpassword')]),
-        ];
+        $this->request = $request;
+    }
+
+    public function getUsers()
+    {
+        $users = DB::connection('mysql')->select("SELECT * FROM tbl_user");
+        return $this->successResponse($users);
     }
 
     public function index()
     {
-        return $this->successResponse($this->users);
+        $users = User::all();
+        return $this->successResponse($users);
     }
 
-    public function store(Request $request)
+    public function add(Request $request)
     {
         $rules = [
             'username' => 'required|max:20',
@@ -39,62 +43,47 @@ class UserController extends Controller
 
         $this->validate($request, $rules);
 
-        $data = $request->all();
-        $data['password'] = Hash::make($request->input('password'));
-
-        $user = new User($data);
-        $this->users[] = $user;
+        $userjob = UserJob::findOrFail($request->jobid);
+        $user = User::create($request->all());
 
         return $this->successResponse($user, Response::HTTP_CREATED);
     }
 
-    public function show($username)
+    public function show($id)
     {
-        foreach ($this->users as $user) {
-            if ($user->username === $username) {
-                return $this->successResponse($user);
-            }
-        }
-
-        return $this->errorResponse('User not found', Response::HTTP_NOT_FOUND);
+        $user = User::findOrFail($id);
+        return $this->successResponse($user);
     }
 
-    public function update(Request $request, $username)
+    public function update(Request $request, $id)
     {
         $rules = [
-            'username' => 'sometimes|max:20',
-            'password' => 'sometimes|max:20',
-            'gender'   => 'sometimes|in:Male,Female',
-            'jobid'    => 'sometimes|required|numeric|min:1|not_in:0',
+            'username' => 'max:20',
+            'password' => 'max:20',
+            'gender'   => 'in:Male,Female',
+            'jobid'    => 'required|numeric|min:1|not_in:0',
         ];
 
         $this->validate($request, $rules);
 
-        foreach ($this->users as $user) {
-            if ($user->username === $username) {
-                $updateData = $request->all();
-                if ($request->has('password')) {
-                    $updateData['password'] = Hash::make($request->input('password'));
-                }
+        $userjob = UserJob::findOrFail($request->jobid);
+        $user = User::findOrFail($id);
 
-                $user->fill($updateData);
+        $user->fill($request->all());
 
-                return $this->successResponse($user);
-            }
+        if ($user->isClean()) {
+            return $this->errorResponse('At least one value must change', Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        return $this->errorResponse('User not found', Response::HTTP_NOT_FOUND);
+        $user->save();
+        return $this->successResponse($user);
     }
 
-    public function delete($username)
+    public function delete($id)
     {
-        foreach ($this->users as $key => $user) {
-            if ($user->username === $username) {
-                unset($this->users[$key]);
-                return $this->successResponse('User successfully deleted', Response::HTTP_OK);
-            }
-        }
+        $user = User::findOrFail($id);
+        $user->delete();
 
-        return $this->errorResponse('User not found', Response::HTTP_NOT_FOUND);
+        return $this->successResponse('User successfully deleted', Response::HTTP_OK);
     }
 }
