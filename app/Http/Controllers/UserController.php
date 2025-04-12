@@ -2,129 +2,99 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\UserJob;
 use App\Models\User;
-use App\Traits\ApiResponser; // Use to standardize our code for API response
-use Illuminate\Http\Request; // Handling HTTP requests in Lumen
+use App\Traits\ApiResponser;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Hash; // <-- Import Hash facade
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
     use ApiResponser;
 
-    // Constructor removed - Request injected directly into methods
+    private $users = [];
 
-    /**
-     * Return the list of users.
-     * Consider pagination for large datasets: User::paginate()
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function index()
+    public function __construct()
     {
-        $users = User::all(); // Or User::paginate(15);
-        return $this->successResponse($users);
+        // Initialize with some predefined users
+        $this->users = [
+            new User(['username' => 'bershka', 'password' => Hash::make('password123')]),
+            new User(['username' => 'anotheruser', 'password' => Hash::make('anotherpassword')]),
+        ];
     }
 
-    /**
-     * Create a new user record. (Renamed from add to store)
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function store(Request $request) // Renamed, Request injected here
+    public function index()
+    {
+        return $this->successResponse($this->users);
+    }
+
+    public function store(Request $request)
     {
         $rules = [
             'username' => 'required|max:20',
-            'password' => 'required|max:20', // Consider adding complexity rules (min length etc.)
+            'password' => 'required|max:20',
             'gender'   => 'required|in:Male,Female',
             'jobid'    => 'required|numeric|min:1|not_in:0',
         ];
 
         $this->validate($request, $rules);
 
-        // Validate related UserJob exists
-        UserJob::findOrFail($request->jobid);
-
-        // Prepare data, ensuring password is hashed
         $data = $request->all();
-        $data['password'] = Hash::make($request->input('password')); // <-- Hash the password
+        $data['password'] = Hash::make($request->input('password'));
 
-        $user = User::create($data);
+        $user = new User($data);
+        $this->users[] = $user;
 
         return $this->successResponse($user, Response::HTTP_CREATED);
     }
 
-    /**
-     * Obtain and show one user by ID.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function show($id)
+    public function show($username)
     {
-        $user = User::findOrFail($id); // Handles not found via Handler
-        return $this->successResponse($user);
+        foreach ($this->users as $user) {
+            if ($user->username === $username) {
+                return $this->successResponse($user);
+            }
+        }
+
+        return $this->errorResponse('User not found', Response::HTTP_NOT_FOUND);
     }
 
-    /**
-     * Update an existing user record.
-     *
-     * @param Request $request
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function update(Request $request, $id) // Request injected here
+    public function update(Request $request, $username)
     {
         $rules = [
-            'username' => 'sometimes|max:20', // 'sometimes' means validate only if present
-            'password' => 'sometimes|max:20', // Add complexity rules if needed
+            'username' => 'sometimes|max:20',
+            'password' => 'sometimes|max:20',
             'gender'   => 'sometimes|in:Male,Female',
-            'jobid'    => 'sometimes|required|numeric|min:1|not_in:0', // Fixed formatting, ensure logic is correct
+            'jobid'    => 'sometimes|required|numeric|min:1|not_in:0',
         ];
 
         $this->validate($request, $rules);
 
-        $user = User::findOrFail($id); // Find user or fail (404)
+        foreach ($this->users as $user) {
+            if ($user->username === $username) {
+                $updateData = $request->all();
+                if ($request->has('password')) {
+                    $updateData['password'] = Hash::make($request->input('password'));
+                }
 
-        // Validate related UserJob exists IF jobid is being updated
-        if ($request->has('jobid')) {
-            UserJob::findOrFail($request->jobid);
+                $user->fill($updateData);
+
+                return $this->successResponse($user);
+            }
         }
 
-        // Prepare data for update, hashing password if provided
-        $updateData = $request->all();
-        if ($request->has('password')) {
-            $updateData['password'] = Hash::make($request->input('password')); // <-- Hash password if updating
-        }
-
-        $user->fill($updateData);
-
-        // Check if anything actually changed
-        if ($user->isClean()) {
-            return $this->errorResponse('At least one value must change', Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        $user->save();
-
-        return $this->successResponse($user);
+        return $this->errorResponse('User not found', Response::HTTP_NOT_FOUND);
     }
 
-
-    /**
-     * Remove an existing user.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function delete($id)
+    public function delete($username)
     {
-        $user = User::findOrFail($id); // Find user or fail (404)
-        $user->delete();
+        foreach ($this->users as $key => $user) {
+            if ($user->username === $username) {
+                unset($this->users[$key]);
+                return $this->successResponse('User successfully deleted', Response::HTTP_OK);
+            }
+        }
 
-        // You can return just a 204 No Content, or a confirmation message with 200 OK
-        // return $this->successResponse(null, Response::HTTP_NO_CONTENT);
-        return $this->successResponse('User successfully deleted', Response::HTTP_OK);
+        return $this->errorResponse('User not found', Response::HTTP_NOT_FOUND);
     }
 }
